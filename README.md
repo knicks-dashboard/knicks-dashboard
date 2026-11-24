@@ -33,6 +33,9 @@ python3 test_live/app.py            # http://127.0.0.1:8766
 ```
 
 옵션: `--port 8766`, `--team NYK`, `--no-open`(브라우저 자동으로 열지 않음).
+
+**데모 모드** (`--demo`, 배포용): 외부 요청 없이 `test_live/demo/`에 고른 경기 기록만으로 리플레이와 경기 후 분석을 보여 준다.
+`Procfile`은 이 모드로 AWS Elastic Beanstalk(포트 8000)에서 실행하도록 되어 있다.
 같은 와이파이의 휴대폰에서도 접속할 수 있다.
 
 ## 폴더 구조

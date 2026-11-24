@@ -21,3 +21,6 @@ Claude outputs/
 my_*.json
 test_live/my_*.json
 test_live/widget/prefs.json
+
+# 배포용 압축 파일
+*.zip
