@@ -15,6 +15,7 @@
    끝난 경기는 1) 의 저장본만 쓴다. 다시 사용하다 또 차단되면 하루 한 번 확인 단계로 돌아간다.
 7) 닉스 라이브 경기 중에는 ESPN 요청 중 라이브 추적과 부상 정보만 보낸다 (리그 데스크·뎁스 차트 등은 경기 뒤로).
    용도는 요청 헤더 X-Knicks-Purpose 로 알린다 (live · injuries · probe). 이 헤더는 실제로 보내지 않는다.
+8) 데모 모드 (app.py --demo, 배포용): 어떤 사이트로도 요청을 보내지 않고, 연결 확인도 하지 않는다.
 
 보내지 않은 요청은 NotSent(BackedOff / Offline) 를 던진다. 호출하는 쪽은 실패와 똑같이 저장본·대체 소스로 처리한다.
 """
@@ -38,6 +39,8 @@ FINAL_DIR = os.path.join(HERE, "cache", "final")
 STATE_FILE = os.path.join(HERE, "cache", "net_state.json")
 COUNT_DIR = os.path.join(HERE, "logs", "requests")
 REPLAY_DATA = os.path.join(HERE, "replay_data")
+DEMO_DIR = os.path.join(HERE, "demo")          # 데모 모드 데이터 (make_demo.py 가 만든다)
+DEMO = False                                   # 데모 모드: 외부로 아무 요청도 보내지 않는다 (set_demo)
 KST = timezone(timedelta(hours=9))
 
 HEADERS = {
@@ -424,12 +427,14 @@ NET = _Net()
 
 def _net_loop() -> None:
     while True:
+        time.sleep(10)   # 첫 확인도 10초 뒤 (그 사이 데모 모드가 켜질 수 있게. 그 전 요청은 NET.ready() 가 직접 확인한다)
+        if DEMO:
+            return
         try:
             NET.tick()
             _cdn_probe_due()
         except Exception:
             pass
-        time.sleep(10)
 
 
 # ---------------------------------------------------------------- 끝난 경기 저장본
@@ -516,6 +521,10 @@ class NBASession(requests.Session):
     def request(self, method, url, **kw):
         host = urlparse(url).hostname or ""
         gate = GATES.get(host)
+        if DEMO:   # 데모 모드: 어떤 사이트로도 보내지 않는다 (호출하는 쪽은 실패와 똑같이 저장본으로 처리)
+            if gate:
+                COUNT.add(host, "not_sent")
+            raise Offline(f"{NAMES.get(host, host)} 요청 안 보냄: 데모 모드")
         if gate is None:
             return super().request(method, url, **kw)
         params = kw.get("params")
@@ -705,6 +714,12 @@ def live_off(game_id: str) -> None:
 
 
 _busy_fn = None
+
+
+def set_demo() -> None:
+    """데모 모드 켜기 (app.py --demo). 이 뒤로는 외부 요청이 하나도 나가지 않는다."""
+    global DEMO
+    DEMO = True
 
 
 def set_busy_fn(fn) -> None:

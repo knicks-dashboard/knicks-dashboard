@@ -122,6 +122,11 @@ def fetch(key: str, fn, path: str, label: str | None = None, on_recover=None):
             busy = False
     if busy:   # 재시도가 돌고 있으면 외부에 묻지 않고 저장본
         return _fallback(key, path, label)
+    if NH.DEMO:   # 데모 모드: 외부에 묻지 않고 저장본만 (없으면 Unavailable, 재시도도 예약하지 않음)
+        data = _load(path)
+        if data is None:
+            raise Unavailable(f"{label}: 데모에서는 지원하지 않음")
+        return data
     if NH.is_live():   # 라이브 중: 비긴급 갱신은 미루고 저장본 (저장본이 없을 때만 받는다)
         data = _load(path)
         if data is not None:

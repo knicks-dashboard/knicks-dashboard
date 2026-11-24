@@ -1222,8 +1222,8 @@ async function detectApp() {
     const r = await fetch("/api/games", { cache: "no-store" });
     if (r.ok) {
       APP.on = true;
-      const h = location.hash.slice(1);
-      APP.ch = ["now", "last", "prev2", "league"].includes(h) ? h : "now";
+      const h = location.hash.slice(1), j = await r.json();
+      APP.ch = ["now", "last", "prev2", "league"].includes(h) ? h : j.demo ? "last" : "now";   // 데모에는 지금 경기가 없다
     }
   } catch (e) { /* 단독 모드 */ }
 }
@@ -1434,6 +1434,12 @@ const NET_SHOW = ["cdn.nba.com", "stats.nba.com", "site.api.espn.com", "sports.c
 function leftKo(sec) { return sec >= 3600 ? `${Math.floor(sec / 3600)}시간 ${Math.round((sec % 3600) / 60)}분` : sec >= 60 ? `${Math.round(sec / 60)}분` : `${sec}초`; }
 function renderNet() {
   const N = data?.net, el = $("net");
+  if (data?.demo) {   // 데모 모드: 외부 요청이 없으니 사이트별 상태 대신 안내 한 줄
+    const html = `<span class="ns">데모 모드 · 외부 요청 없음 · 저장된 경기 기록으로 재생 (데모 데이터 ${kstMDH(data.demo.made_utc)} 기준)</span>`;
+    if (el.innerHTML !== html) el.innerHTML = html;
+    el.hidden = false;
+    return;
+  }
   if (!N) { el.hidden = true; return; }
   const parts = [];
   if (N.net.online === false) parts.push(`<span class="ns off">⚠ 인터넷 연결 없음 — 연결되면 자동 재개</span>`);
@@ -1529,7 +1535,7 @@ function render() {
     for (const id of ["source", "updated", "next", "issues"]) $(id).textContent = "";
     if (kind === "preview") { renderPreview(); renderBrief(s); renderH2H(s); }
     else if (kind === "replay-ready") renderReady();
-    else $("empty-msg").textContent = APP.ch === "now" ? "예정된 경기를 일정에서 찾지 못했습니다." : "해당하는 지난 경기가 없습니다.";
+    else $("empty-msg").textContent = data.empty_msg || (APP.ch === "now" ? "예정된 경기를 일정에서 찾지 못했습니다." : "해당하는 지난 경기가 없습니다.");
     document.title = kind === "preview" ? `프리뷰 · ${s.away} @ ${s.home}` : "Live Test";
     return;
   }
@@ -1826,7 +1832,7 @@ function renderNav() {
     b.setAttribute("aria-current", String(ch === APP.ch));
     b.disabled = !g;
     const title = { now: "지금 경기", last: "지난 경기", prev2: "전전 경기" }[ch];
-    if (!g) { b.innerHTML = `<span class="tk-stub"><b>—</b></span><span class="tk-body"><span class="tk-t">${title}</span><span class="tk-s">경기 없음</span></span>`; continue; }
+    if (!g) { b.innerHTML = `<span class="tk-stub"><b>—</b></span><span class="tk-body"><span class="tk-t">${title}</span><span class="tk-s">${data.demo ? "데모 미지원" : "경기 없음"}</span></span>`; continue; }
     const d = new Date(g.tipoff_utc);
     const mmdd = d.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit" }).replace(/\s/g, "").replace(/\.$/, "");
     const wd = d.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", weekday: "short" });
@@ -2142,7 +2148,8 @@ function renderReady() {
   const home = g.home ? "NYK" : g.opp, away = g.home ? g.opp : "NYK";
   const pb = data.pre_brief;
   let brief = `<p class="empty">경기 브리핑을 불러오는 중입니다…</p>`;
-  if (pb) {
+  if (pb?.unsupported) brief = `<h3>경기 브리핑</h3><p class="empty">${esc(pb.unsupported)}</p>`;
+  else if (pb) {
     const teams = [away, home];
     const col = (t, list, fmt) => `<div><div class="b-team">${bul(t)}</div>${list.length ? `<ul>${list.map(fmt).join("")}</ul>` : `<div class="b-note">없음</div>`}</div>`;
     const tm = (t) => (pb.teams || {})[t] || { starters: [], dnp: [] };
@@ -2731,7 +2738,7 @@ $("react-bar").addEventListener("submit", async (ev) => {
   } finally { btn.disabled = false; }
 });
 function renderReactBar(s) {
-  const on = APP.on && !!s && (data.kind === "live" || data.kind === "replay") && (s.status === "live" || s.status === "final");
+  const on = APP.on && !data.demo && !!s && (data.kind === "live" || data.kind === "replay") && (s.status === "live" || s.status === "final");
   $("react-bar").hidden = !on;
   document.body.classList.toggle("has-react", on);
 }

@@ -7,6 +7,8 @@
   경기가 끝나고 15분이 지나면 다음 경기 프리뷰로 넘어가고, 끝난 경기는 '지난 경기'가 된다.
 - 지난/전전 경기: 재생 버튼을 누르면 리플레이 (1x/5x/10x/30x, 일시정지).
 - 라이브와 리플레이는 tracker.py 의 같은 엔진·같은 화면 데이터 형식을 쓴다.
+- 데모 모드(--demo, 배포용): 외부 요청 없이 demo/games.json 의 두 경기(make_demo.py 가 replay_data/ 에서 고름)만
+  리플레이·경기 후 분석. 지금 경기·리그 데스크·재생 전 브리핑처럼 외부 데이터가 필요한 화면과 파일에 쓰는 기능은 '데모에서는 지원하지 않음'.
 - 모든 쓰기는 test_live/ 안에서만. baseline/game_log.csv 는 맞대결 비교에 읽기만 한다.
 """
 from __future__ import annotations
@@ -43,6 +45,8 @@ SCHEDULE_REFRESH_NEAR = timedelta(minutes=10)   # 닉스 경기 앞뒤 (팁오�
 TICK_SEC = 30
 INJURY_LIVE_EVERY = timedelta(minutes=5)       # 닉스 라이브 중 부상 정보 갱신 (다른 ESPN 요청은 경기 뒤로 미룸)
 CHANNELS = ("now", "last", "prev2")
+DEMO_NOTE = "데모에서는 지원하지 않음 (외부 데이터가 필요한 화면입니다)"
+DEMO_SAVE_NOTE = "데모에서는 지원하지 않음 (저장 기능은 꺼 두었습니다)"
 
 
 def now_utc() -> datetime:
@@ -180,6 +184,28 @@ class Schedule:
 
 
 # ---------------------------------------------------------------- 경기 전 예측
+
+class DemoSchedule:
+    """데모 모드 일정: make_demo.py 가 고른 끝난 경기 (demo/games.json, 최신이 앞). 외부 요청·갱신 없음."""
+
+    def __init__(self):
+        path = os.path.join(NH.DEMO_DIR, "games.json")
+        if not os.path.exists(path):
+            raise SystemExit("데모 데이터가 없습니다. 먼저 python3 test_live/make_demo.py 를 실행하세요")
+        with open(path) as f:
+            d = json.load(f)
+        self.games, self.made_utc = d["games"], d["made_utc"]
+
+    def refresh(self, force: bool = False) -> None:
+        pass
+
+    def near_game(self, before: timedelta, after: timedelta) -> bool:
+        return False
+
+    def picks(self) -> dict[str, dict | None]:
+        return {"now": None, "last": self.games[0] if self.games else None,
+                "prev2": self.games[1] if len(self.games) > 1 else None}
+
 
 def predict(home: str, away: str, season: str) -> dict:
     """지난 시즌 넷레이팅 차이 + 홈 어드밴티지로 기대 점수 차를 잡고, 승률로 바꾼다."""
@@ -483,7 +509,7 @@ def _dnp_ko(comment: str) -> str:
 class ReplayChannel:
     """지난/전전 경기: 먼저 그 경기 브리핑, 재생 버튼을 누르면 리플레이."""
 
-    def __init__(self, game: dict, name: str, team: str = T.FOCUS):
+    def __init__(self, game: dict, name: str, team: str = T.FOCUS, demo: bool = False):
         self.game, self.name = game, name
         self.tracker: T.Tracker | None = None
         self.loading = False
@@ -493,7 +519,10 @@ class ReplayChannel:
         self.pre_loading = False
         self.pre_at = 0.0
         self.pre_fails = 0
-        self._load_pre()
+        if demo:   # 재생 전 브리핑(경기 전 예측·맞대결 등)은 외부 데이터가 필요하다
+            self.pre = {"unsupported": DEMO_NOTE}
+        else:
+            self._load_pre()
 
     def _load_pre(self) -> None:
         """재생 전 브리핑. 일부를 못 받았으면 (경기 직후 stats.nba.com 기록이 아직 비어 있는 경우 등)
@@ -557,14 +586,15 @@ class ReplayChannel:
 # ---------------------------------------------------------------- 관리자
 
 class App:
-    def __init__(self, team: str):
+    def __init__(self, team: str, demo: bool = False):
         self.team = team
-        self.schedule = Schedule(team)
+        self.demo = demo
+        self.schedule = DemoSchedule() if demo else Schedule(team)
         self.villains = R.VillainService()
         # 닉스 경기 시간(팁오프 1시간 전 ~ 4시간 뒤): 리그 전 경기 데이터 같은 무거운 갱신을 하지 않는다
         NH.set_busy_fn(lambda: self.schedule.near_game(timedelta(hours=1), timedelta(hours=4)))
-        self.league = LG.LeagueDesk(self._next_opp)
-        self.desk = DK.Desk(self.league, self._next_opp)
+        self.league = None if demo else LG.LeagueDesk(self._next_opp)   # 데모: 리그 데스크 없음
+        self.desk = None if demo else DK.Desk(self.league, self._next_opp)
         self.channels: dict[str, object | None] = dict.fromkeys(CHANNELS)
         self.games: dict[str, dict | None] = dict.fromkeys(CHANNELS)
         self.lock = threading.Lock()
@@ -600,6 +630,8 @@ class App:
 
     def _team_games(self, g: dict) -> int:
         """이 경기까지 닉스가 이번 시즌 치른 정규시즌 경기 수 (경기 후 분석의 기준값 고르기용)."""
+        if self.demo:   # 데모 일정에는 두 경기뿐 → make_demo.py 가 전체 일정으로 세어 둔 값
+            return g["team_games"]
         season = season_of(parse_utc(g["tipoff_utc"]))
         return sum(1 for x in self.schedule.games if x["game_id"][:3] == "002" and x["status"] == 3
                    and season_of(parse_utc(x["tipoff_utc"])) == season and x["tipoff_utc"] <= g["tipoff_utc"])
@@ -632,8 +664,9 @@ class App:
                 for ch in ("last", "prev2"):
                     if isinstance(self.channels.get(ch), ReplayChannel):
                         self.channels[ch].tick()
-                self.league.tick()
-                self.desk.tick()
+                if not self.demo:
+                    self.league.tick()
+                    self.desk.tick()
             except Exception as exc:
                 self.last_error = RS.friendly("서버 내부 갱신", exc, then="10초 뒤 다시 시도")
                 traceback.print_exc()
@@ -669,7 +702,7 @@ class App:
                     continue
                 print(f"[채널] {ch}: {g['away']} @ {g['home']} ({g['game_id']}, {g['tipoff_utc']})", flush=True)
                 self.games[ch] = dict(g)
-                self.channels[ch] = NowChannel(self.games[ch], self.team, self.villains) if ch == "now" else ReplayChannel(self.games[ch], ch, self.team)
+                self.channels[ch] = NowChannel(self.games[ch], self.team, self.villains) if ch == "now" else ReplayChannel(self.games[ch], ch, self.team, self.demo)
 
     def nav(self) -> dict:
         out = {}
@@ -692,7 +725,10 @@ class App:
         ui_version = int(os.path.getmtime(os.path.join(T.WEB, "index.html")))
         base = {"channel": ch, "nav": self.nav(), "game": self.nav().get(ch), "server_error": self.last_error,
                 "ui_version": ui_version, "data_status": RS.notices(),   # 지금 실패 중인 외부 데이터 (원문 없음)
-                "net": NH.status()}   # 사이트별 정상 / 쉬는 중 / 대체 소스 사용 중 · 인터넷 연결 · 오늘 요청 수
+                "net": NH.status(),   # 사이트별 정상 / 쉬는 중 / 대체 소스 사용 중 · 인터넷 연결 · 오늘 요청 수
+                "demo": {"made_utc": self.schedule.made_utc} if self.demo else None}
+        if self.demo and (ch == "league" or c is None):
+            return {**base, "kind": "empty", "empty_msg": DEMO_NOTE if ch in ("now", "league") else None}
         if ch == "league":
             return {**base, **self.league.snapshot(), **self.desk.snapshot(),
                     "state": {"status": "league", "home": "", "away": "", "focus": self.team, "alerts": [], "players": [], "teams": {}},
@@ -702,8 +738,8 @@ class App:
         out = {**base, **c.snapshot()}
         g = self.games.get(ch)
         if out["kind"] in ("live", "replay"):
-            out["reactions"] = R.reactions_for(g["game_id"])
-        if out["kind"] in ("preview", "replay-ready"):   # 일정·체력 (지난 경기는 '당시 일정 조건', 결과 없음)
+            out["reactions"] = [] if self.demo else R.reactions_for(g["game_id"])   # 데모: 개인 반응 기록은 보여 주지 않음
+        if out["kind"] in ("preview", "replay-ready") and not self.demo:   # 일정·체력 (지난 경기는 '당시 일정 조건', 결과 없음)
             out["fatigue"] = self.fatigue(g)
         if isinstance(c, NowChannel) and out["kind"] in ("preview", "live"):
             out["villains"] = self.villains.get(c.opp, self.team)
@@ -781,7 +817,7 @@ def serve(app: App, port: int, open_browser: bool) -> None:
                     with open(os.path.join(T.WEB, "index.html"), "rb") as f:
                         return self._send(200, f.read(), "text/html; charset=utf-8")
                 if u.path == "/api/games":
-                    return self._json(app.nav())
+                    return self._json({**app.nav(), "demo": app.demo})
                 if u.path == "/api/view" and (ch in CHANNELS or ch == "league"):
                     return self._json(app.view(ch))
                 if u.path == "/api/analysis" and ch in CHANNELS:
@@ -798,6 +834,8 @@ def serve(app: App, port: int, open_browser: bool) -> None:
             n = int(self.headers.get("Content-Length", 0))
             try:
                 body = json.loads(self.rfile.read(n) or b"{}")
+                if app.demo and u.path != "/api/control":   # 데모: 파일에 쓰는 기능(반응·픽·메모·딜레이)은 막는다
+                    return self._json({"error": DEMO_SAVE_NOTE})
                 if u.path == "/api/delay":
                     return self._json(app.set_delay(body.get("value")))
                 if u.path == "/api/control" and ch in CHANNELS:
@@ -841,8 +879,12 @@ def main() -> None:
     ap.add_argument("--team", default=T.FOCUS)
     ap.add_argument("--port", type=int, default=8766)
     ap.add_argument("--no-open", action="store_true")
+    ap.add_argument("--demo", action="store_true", help="외부 요청 없이 replay_data/ 의 경기 기록만으로 리플레이·경기 후 분석 (배포용)")
     args = ap.parse_args()
-    serve(App(args.team), args.port, not args.no_open)
+    if args.demo:
+        NH.set_demo()
+        print("데모 모드: 외부 요청 없음 · demo/games.json 의 경기만", flush=True)
+    serve(App(args.team, args.demo), args.port, not args.no_open)
 
 
 if __name__ == "__main__":

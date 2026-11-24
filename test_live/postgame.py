@@ -15,6 +15,7 @@ import os
 from datetime import datetime, timedelta, timezone
 
 import league as LG
+import nba_http as NH
 import resilient as RS
 import rivals as RV
 import tracker as T
@@ -95,6 +96,17 @@ def _box_totals(team: dict) -> dict:
             "OREB": s["reboundsOffensive"], "DREB": s["reboundsDefensive"]}
 
 
+def _league_cached(name: str, fetch, max_age):
+    """리그 기준값 캐시. 데모 모드에서는 make_demo.py 가 test_live/demo/ 에 복사해 둔 사본만 읽는다
+    (league/ 는 git 에 없어서 배포한 서버에는 없다)."""
+    if NH.DEMO:
+        data = RS._load(os.path.join(NH.DEMO_DIR, name))
+        if data is None:
+            raise RS.Unavailable("리그 기준값: 데모 데이터에 없음 (make_demo.py 를 다시 실행)")
+        return data
+    return LG._cached(name, fetch, max_age)
+
+
 def league_totals(season: str) -> dict:
     """리그 30팀 정규시즌 합계 → 같은 공식의 리그 값. 끝난 시즌은 영구 캐시."""
     def fetch():
@@ -104,7 +116,7 @@ def league_totals(season: str) -> dict:
         tot = {k: float(df[k].sum()) for k in ("FGM", "FGA", "FG3M", "FTM", "FTA", "TOV", "OREB", "DREB")}
         return {**tot, "teams": len(df), "games": int(df["GP"].sum() / 2)}
     finished = datetime.now(timezone.utc) > datetime(int(season[:4]) + 1, 7, 1, tzinfo=timezone.utc)
-    return LG._cached(f"league_totals_{season}.json", fetch, None if finished else timedelta(hours=6))
+    return _league_cached(f"league_totals_{season}.json", fetch, None if finished else timedelta(hours=6))
 
 
 def league_misc(season: str) -> dict:
@@ -117,7 +129,7 @@ def league_misc(season: str) -> dict:
         return {"PTS_OFF_TOV": float(df["PTS_OFF_TOV"].sum()), "PTS_FB": float(df["PTS_FB"].sum()),
                 "team_games": int(df["GP"].sum()), "teams": len(df)}
     finished = datetime.now(timezone.utc) > datetime(int(season[:4]) + 1, 7, 1, tzinfo=timezone.utc)
-    return LG._cached(f"league_misc_{season}.json", fetch, None if finished else timedelta(hours=6))
+    return _league_cached(f"league_misc_{season}.json", fetch, None if finished else timedelta(hours=6))
 
 
 def tov_baseline(base: dict) -> dict:

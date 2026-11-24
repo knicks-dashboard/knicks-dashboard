@@ -1,0 +1,32 @@
+{
+ "made_utc": "2026-11-24T07:45:58+00:00",
+ "note": "make_demo.py 가 만든 데모 경기 목록 (최신이 앞)",
+ "games": [
+  {
+   "label": "",
+   "game_id": "0022600285",
+   "tipoff_utc": "2026-11-23T01:00:00Z",
+   "home": "NYK",
+   "away": "IND",
+   "arena": "Madison Square Garden, New York",
+   "status": 3,
+   "status_text": "Final",
+   "type": "정규시즌",
+   "team_games": 17,
+   "data_source": "ESPN"
+  },
+  {
+   "label": "",
+   "game_id": "0022600241",
+   "tipoff_utc": "2026-11-15T23:00:00Z",
+   "home": "TOR",
+   "away": "NYK",
+   "arena": "Scotiabank Arena, Toronto",
+   "status": 3,
+   "status_text": "Final",
+   "type": "정규시즌",
+   "team_games": 13,
+   "data_source": "ESPN"
+  }
+ ]
+}
