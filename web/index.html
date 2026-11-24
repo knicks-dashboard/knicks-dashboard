@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gamecast</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="title-row">
+    <span id="title" class="title">—</span>
+    <span id="mode" class="badge">—</span>
+  </div>
+  <div class="scoreboard">
+    <div class="team" id="away-team"><span class="swatch"></span><span class="tri">—</span><span class="score">0</span></div>
+    <div class="clock"><div id="period">Q1</div><div id="clock">12:00</div></div>
+    <div class="team home" id="home-team"><span class="score">0</span><span class="tri">—</span><span class="swatch"></span></div>
+  </div>
+  <div id="current-run" class="current-run"></div>
+</header>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<section class="controls" id="controls">
+  <button id="play" class="btn primary">⏸ 일시정지</button>
+  <div class="speeds" id="speeds"></div>
+  <div class="seek-wrap">
+    <input type="range" id="seek" min="0" max="2880" step="1" value="0" aria-label="경기 시점 이동">
+    <div class="period-jumps" id="period-jumps"></div>
+  </div>
+  <button id="restart" class="btn">처음부터</button>
+</section>
+<section class="controls live-info" id="live-info" hidden></section>
+
+<main class="grid">
+  <section class="card wide">
+    <div class="card-head">
+      <h2>점수 차 흐름</h2>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="chart-wrap" id="chart-wrap">
+      <svg id="chart" role="img" aria-label="점수 차 흐름 그래프"></svg>
+      <div class="tooltip" id="tooltip" hidden></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 id="wp-title">승리 확률</h2>
+      <div class="wp-now" id="wp-now">—</div>
+    </div>
+    <div class="chart-wrap">
+      <svg id="wp-chart" role="img" aria-label="승리 확률 그래프"></svg>
+      <div class="tooltip" id="wp-tooltip" hidden></div>
+    </div>
+    <p class="note" id="wp-note"></p>
+  </section>
+
+  <section class="card">
+    <h2>오늘 평소와 다른 점 <span class="sub">기준값 대비 가장 크게 벗어난 기록</span></h2>
+    <ol id="unusual" class="unusual"></ol>
+    <p class="note" id="unusual-note"></p>
+  </section>
+
+  <section class="card">
+    <h2>쿼터별 득점</h2>
+    <div class="table-wrap"><table id="linescore"></table></div>
+    <p class="note" id="linescore-note"></p>
+  </section>
+
+  <section class="card">
+    <h2>런 구간 <span class="sub">8점 차 이상, 상대 득점 ¼ 이하</span></h2>
+    <ol id="runs" class="runs"></ol>
+  </section>
+
+  <section class="card wide">
+    <h2>Four Factors <span class="sub" id="ff-sub"></span></h2>
+    <div class="table-wrap"><table id="four-factors"></table></div>
+  </section>
+
+  <section class="card wide">
+    <h2>박스스코어</h2>
+    <div class="box-grid">
+      <div><h3 id="box-away-title"></h3><div class="table-wrap"><table id="box-away" class="box"></table></div></div>
+      <div><h3 id="box-home-title"></h3><div class="table-wrap"><table id="box-home" class="box"></table></div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>최근 플레이</h2>
+    <ul id="plays" class="plays"></ul>
+  </section>
+
+  <section class="card">
+    <h2>알림 기록 <span class="sub">6점 이상 연속 득점 · 주전 파울 4개 이상</span></h2>
+    <ol id="alert-log" class="alert-log"></ol>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
