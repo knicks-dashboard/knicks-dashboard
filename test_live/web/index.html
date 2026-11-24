@@ -11,18 +11,19 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 :root {
-  /* 매디슨 스퀘어 가든 밤 경기: 짙은 남색 바탕, 닉스 주황·파랑 포인트 (한 가지 테마) */
-  --bg: #0B1626; --surface: #13233A; --surface-2: #1A2E4B; --ink: #F2F5FA; --ink-2: #C4CDDB; --muted: #8796AE;
-  --line: #24395A; --grid: #1B2F4B;
+  /* 뉴욕 지하철 표지판: 역 타일 회백색 바탕, 검은 표지판 띠, 닉스 파랑·주황 = A/C/E·B/D/F/M 노선색 */
+  --bg: #ECEFEF; --surface: #FFFFFF; --surface-2: #F3F5F5; --ink: #1C1C1C; --ink-2: #3A4046; --muted: #626A71;
+  --line: #C5CBCB; --grid: #DDE1E1; --sign: #1C1C1C; --sign-ink: #FFFFFF; --sign-2: #BFC6C6;
+  --field: #F3F5F5;   /* 입력칸·칩 바탕 */
   --nyk-orange: #F58426; --nyk-blue: #006BB6; --nyk-blue-hi: #3D8FD6;
   --focus: #F58426; --opp: #8FA3BF;            /* 경기마다 팀 대표색으로 바뀐다 */
-  --live: #FF5A5F; --test: #F5B342;
-  --good: #3CCB7F; --bad: #FF6B6B; --warn: #F5B342;
-  --warn-soft: rgba(245, 179, 66, .14); --bad-soft: rgba(255, 107, 107, .14);
-  --div-cold: #4C8DF0; --div-mid: #2A3B55; --div-hot: #F0605D;   /* 구역 성공률: 평균보다 낮음 ↔ 높음 */
-  --num: "Oswald", "Pretendard", "Noto Sans KR", sans-serif;     /* 숫자: 굵은 컨덴스드 스포츠 글꼴 */
+  --live: #D7262E; --test: #B07800;
+  --good: #17834A; --bad: #CC2F2F; --warn: #B06A00;
+  --warn-soft: rgba(245, 132, 38, .15); --bad-soft: rgba(204, 47, 47, .10);
+  --div-cold: #2F6FD0; --div-mid: #E4E8E8; --div-hot: #D9443F;   /* 구역 성공률: 평균보다 낮음 ↔ 높음 */
+  --num: "Helvetica Neue", Helvetica, "Pretendard", sans-serif;   /* 숫자: 지하철 표지판 글꼴 (맥 기본) */
   --kr: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
-  color-scheme: dark;
+  color-scheme: light dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -191,6 +192,11 @@ td.muted { color: var(--muted); }
 .tv-card.burst-c { box-shadow: inset 3px 0 0 rgba(245,179,66,.8); }
 .tv-card .ttl { font-weight: 700; margin-bottom: 2px; }
 .tv-card .five { color: var(--ink-2); font-size: 12px; }
+.pot-cmp { display: grid; grid-template-columns: auto 1fr auto; gap: 6px 10px; align-items: center; margin: 4px 0 10px; font-size: 13px; }
+.pot-cmp .lab { font-weight: 700; white-space: nowrap; }
+.pot-cmp .track { display: flex; height: 18px; border-radius: 5px; overflow: hidden; background: var(--surface-2); min-width: 0; }
+.pot-cmp .track div { height: 100%; }
+.pot-cmp .v { font-family: var(--num); font-weight: 700; font-size: 16px; text-align: right; }
 .tv-runs { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
 #teams-tov-note { margin-top: 6px; }
 .est-tag { font-size: 11px; color: var(--warn); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; margin-left: 4px; }
@@ -799,6 +805,110 @@ body.has-react { padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px));
 #net .paused { color: #F5B342; font-weight: 600; } #net .paused .dot { background: #F5B342; }
 #net .fb { color: #7FB8FF; font-weight: 600; }
 #net .off { color: #FF6B6B; font-weight: 700; }
+
+/* ================= 뉴욕 지하철 표지판 테마 (위 나이트 테마를 덮어쓴다. 지우면 나이트 테마로 돌아간다) =================
+   - 카드 제목 = 검은 표지판 띠, 팀 = 동그란 노선 기호(.bullet), 모서리는 거의 각지게
+   - 어두운 곳(점수판·표지판 띠·팝업)은 그 안에서만 글자색 토큰을 밝게 바꾼다 */
+body { background: var(--bg); }
+.card { --pad-y: 14px; --pad-x: 16px; background: var(--surface); border: 0; border-radius: 4px; box-shadow: none; padding: var(--pad-y) var(--pad-x); }
+@media (max-width: 480px) { .card { --pad-y: 12px; --pad-x: 12px; } }
+.card > h2:first-child, .card > .lg-head:first-child, .card > .box-head:first-child, .card .pg-head,
+.brief > summary { background: var(--sign); color: var(--sign-ink); margin: calc(-1 * var(--pad-y)) calc(-1 * var(--pad-x)) 12px;
+  padding: 10px var(--pad-x); border-radius: 4px 4px 0 0; }
+.card > h2:first-child, .card > .lg-head h2, .card > .box-head h2, .card .pg-head h2, .brief > summary .b-title {
+  font-family: "Helvetica Neue", Helvetica, var(--kr); font-weight: 500; font-size: 17px; letter-spacing: -.01em; color: var(--sign-ink); margin: 0; }
+.card > h2:first-child .sub, .card > .lg-head .sub, .card > .box-head .sub, .card .pg-head .sub, .brief > summary .b-meta,
+.brief > summary::before { color: var(--sign-2); }
+.card > .box-head:first-child, .card > h2:first-child { --ink: var(--sign-ink); --ink-2: var(--sign-2); --muted: var(--sign-2); --line: #4A5056; --surface: var(--sign); --surface-2: #2C3136; }
+.card .pg-head .pg-btn { background: transparent; color: var(--sign-ink); border-color: #4A5056; border-radius: 4px; }
+.pg-card { padding-bottom: 18px; }
+.pg-sec h3 { background: var(--sign); color: var(--sign-ink); font-family: "Helvetica Neue", Helvetica, var(--kr); font-weight: 500; font-size: 15px;
+  margin: 18px 0 10px; padding: 8px 12px; border-radius: 3px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pg-sec h3 .b-note, .pg-sec h3 .info { color: var(--sign-2); }
+.pg-tbl th, th { color: var(--ink); font-weight: 700; }
+.pg-tbl th { border-bottom: 2px solid var(--sign); }
+.pg-run, .tv-card, .ft-col { background: var(--surface-2); border-radius: 0; border-left: 5px solid var(--sign); }
+.tv-card.burst-c { box-shadow: none; border-left-color: var(--nyk-orange); }
+.pot-cmp .track { height: 12px; border-radius: 6px; background: var(--grid); }
+.pot-cmp .lab { display: flex; align-items: center; }
+.pot-cmp .v { font-size: 22px; font-weight: 500; }
+
+/* 노선 기호 */
+.bullet { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; flex: none;
+  font: 700 10px/1 "Helvetica Neue", Helvetica, sans-serif; letter-spacing: .02em; vertical-align: middle; }
+.swatch { border-radius: 50%; }
+
+/* 숫자·링크 */
+a { color: var(--nyk-blue); }
+.num, .pts, .clock, .wp-now, .pv-count, .h2h-summary .v, .pred-bar b, td, .rb-pos, .lineup span { font-weight: 500; }
+
+/* 어두운 곳: 점수판 · 위 미니 점수 · 경기 시작 시계 · 팝업 */
+.scorecard, .mini, .hero-clock, .tooltip, .pop, .toast { --ink: #FFFFFF; --ink-2: #C9CFCF; --muted: #A3ABB1; --line: #4A5056; --grid: #33383D;
+  --surface: var(--sign); --surface-2: #2C3136; color: var(--ink); }
+.scorecard { background: var(--sign); border: 0; border-radius: 4px; box-shadow: none; }
+.scorecard .pts { color: #fff; text-shadow: none; }
+.scorecard .clock, .hc-hms { color: var(--nyk-orange); text-shadow: none; }
+.scorecard .mid { border-color: #4A5056; }
+.mini { background: rgba(28,28,28,.96); border-bottom: 0; }
+.hero-clock { background: var(--sign); border: 0; border-radius: 4px; box-shadow: none; }
+.tooltip, .pop, .toast { background: var(--sign); border-color: var(--sign); }
+.toasts .toast { box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+
+/* 경기 탭(티켓) */
+.chnav button { background: var(--surface); border: 1.5px solid var(--line); border-radius: 4px; }
+.chnav button[aria-current="true"] { border-color: var(--sign); box-shadow: 0 0 0 1.5px var(--sign); }
+.tk-stub { border-right-color: var(--line); }
+@media (max-width: 480px) { .tk-stub { border-bottom-color: var(--line); } }
+
+/* 버튼 · 탭 */
+.tabs, .rb-speeds { border-radius: 4px; }
+.tabs button, .rb-btn { border-radius: 3px; }
+.tabs button[aria-selected="true"], .rb-btn[aria-pressed="true"] { background: var(--sign); color: #fff; }
+.btn-toggle, .heat-select, .rb-play, .tl-btn, .vl-btn, .pick-btn, .reveal-btn { background: var(--surface); border-radius: 4px; }
+.rd-play, .re-save { box-shadow: none; border-radius: 4px; }
+
+/* 어두운 바탕용으로 박아 둔 색을 밝은 바탕용으로 */
+.chip, .re-text, .re-chip, .vl, .vl-mine, .pick-hist span, .vl-ed textarea, .vl-ed input, .vl-other select { background: var(--field); }
+.vl, .chip { border-radius: 4px; }
+.re-emo button[aria-checked="true"] { background: var(--warn-soft); }
+.react { background: rgba(236,239,239,.96); border-top: 1px solid var(--line); }
+.tagc { color: var(--bad); background: var(--bad-soft); border-color: rgba(204,47,47,.35); }
+.vl-ed .tags button[aria-pressed="true"] { background: var(--bad-soft); color: var(--bad); }
+.lvl.official, .grade.g-공식, .roy-g .badge-roy { color: #fff; }
+.lvl.article, .grade.g-기사 { color: var(--nyk-blue); background: rgba(0,107,182,.10); border-color: rgba(0,107,182,.4); }
+.lvl.estimate, .grade.g-추정, .stale.brk { background: rgba(0,0,0,.05); }
+.pred-bar { background: var(--grid); }
+.pred-bar.na { background: repeating-linear-gradient(135deg, #E4E8E8 0 8px, #EEF1F1 8px 16px); border-color: var(--line); }
+.testbar { background: rgba(176,120,0,.06); }
+#net .ok .dot { background: var(--good); }
+#net .paused { color: var(--warn); } #net .paused .dot { background: var(--warn); }
+#net .fb { color: var(--nyk-blue); }
+#net .off { color: var(--bad); }
+
+/* 지하철 표지판 · 밤: 맥이 다크 모드면 (시스템 설정 '자동'이면 해 진 뒤) 같은 디자인을 어둡게 */
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #17191A; --surface: #222527; --surface-2: #2B2F32; --field: #2B2F32; --ink: #F2F3F3; --ink-2: #C5CACD; --muted: #9AA1A6;
+    --line: #3E4448; --grid: #32373A; --sign: #000000; --sign-2: #B5BBBF;
+    --good: #4CC98A; --bad: #FF7B72; --warn: #F5B342; --live: #FF5A5F; --test: #F5B342;
+    --warn-soft: rgba(245, 132, 38, .18); --bad-soft: rgba(255, 123, 114, .14);
+    --div-cold: #5C9BF0; --div-mid: #3A4044; --div-hot: #F0605D; }
+  /* 검은 띠가 짙은 회색 카드와 구분되도록 위에 흰 실선 (실제 지하철 표지판처럼) */
+  .card > h2:first-child, .card > .lg-head:first-child, .card > .box-head:first-child, .card .pg-head,
+  .brief > summary { box-shadow: inset 0 3px 0 #000, inset 0 4px 0 rgba(255,255,255,.75); }
+  .pg-sec h3 { box-shadow: inset 0 2px 0 #000, inset 0 3px 0 rgba(255,255,255,.6); }
+  .pg-tbl th { border-bottom-color: var(--ink); }
+  .pg-run, .tv-card, .ft-col { border-left-color: var(--ink); }
+  .scorecard, .hero-clock { background: #000; }
+  .tooltip, .pop, .toast { background: #000; border-color: var(--line); }
+  .chnav button[aria-current="true"] { border-color: var(--ink); box-shadow: 0 0 0 1.5px var(--ink); }
+  .tabs button[aria-selected="true"], .rb-btn[aria-pressed="true"] { background: var(--ink); color: #111; }
+  .lvl.article, .grade.g-기사 { color: #A9D1FF; }
+  .lvl.estimate, .grade.g-추정, .stale.brk { background: rgba(255,255,255,.06); }
+  .pred-bar.na { background: repeating-linear-gradient(135deg, #2B2F32 0 8px, #25282A 8px 16px); }
+  a, #net .fb { color: #7FB8FF; }
+  .react { background: rgba(23,25,26,.96); }
+  .testbar { background: rgba(245,179,66,.06); }
+}
 </style>
 </head>
 <body>
@@ -1027,13 +1137,16 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const pct = (v) => (v == null ? "—" : (v * 100).toFixed(1) + "%");
 let data = null;
 
-// 팀 대표색: 어두운 남색 배경에서 보이도록 대표색 중 밝은 쪽을 쓰고, 닉스 주황과 구분되는지 검사했다 (주황 계열 없음)
-const TEAM_HEX = { NYK: "#F58426", ATL: "#E03A3E", BKN: "#C9CDD3", BOS: "#2BC47A", CHA: "#00A3AD", CHI: "#E2163D",
+// 팀 대표색: 닉스 주황과 구분되는지 검사했다 (주황 계열 없음). 밝은 바탕에서 안 보이는 은색 팀(BKN·SAS)은 진한 색으로
+const TEAM_HEX = { NYK: "#F58426", ATL: "#E03A3E", BKN: "#3A3A3A", BOS: "#2BC47A", CHA: "#00A3AD", CHI: "#E2163D",
   CLE: "#C9466F", DAL: "#2E86DE", DEN: "#4F7FD8", DET: "#E0263F", GSW: "#3D6CC8", HOU: "#E2163D", IND: "#3F6FBF",
   LAC: "#E0263F", LAL: "#8D5CC9", MEM: "#7D97CC", MIA: "#E0243F", MIL: "#2E8B4A", MIN: "#5B8DEF", NOP: "#D32F45",
-  OKC: "#2A9DE0", ORL: "#2B8FD6", PHI: "#3E8EDE", PHX: "#7B5CC9", POR: "#E03A3E", SAC: "#8E5CC9", SAS: "#C4CED4",
+  OKC: "#2A9DE0", ORL: "#2B8FD6", PHI: "#3E8EDE", PHX: "#7B5CC9", POR: "#E03A3E", SAC: "#8E5CC9", SAS: "#6F7A80",
   TOR: "#E2163D", UTA: "#9466DB", WAS: "#E31837" };
-const teamHex = (tri) => TEAM_HEX[tri] || "#8FA3BF";
+// 맥이 다크 모드일 때는 위 진한 은색 팀이 어두운 바탕에 묻히므로 밝은 은색으로
+const DARK_MQ = matchMedia("(prefers-color-scheme: dark)");
+const TEAM_HEX_DARK = { BKN: "#C9CDD3", SAS: "#C4CED4" };
+const teamHex = (tri) => (DARK_MQ.matches && TEAM_HEX_DARK[tri]) || TEAM_HEX[tri] || "#6B7A90";
 function applyTeamColors(s) {
   if (!s || !s.home) return;
   const focus = s.focus || "NYK", opp = s.opponent || (s.home === focus ? s.away : s.home);
@@ -1042,6 +1155,8 @@ function applyTeamColors(s) {
 }
 const color = (tri) => (data && tri === data.state.focus ? "var(--focus)" : "var(--opp)");
 const sw = (tri) => `<span class="swatch" style="background:${color(tri)}"></span>`;
+// 노선 기호: 팀 색 동그라미 안에 약자 (지하철 노선 표시처럼)
+const bul = (tri, bg = color(tri)) => `<span class="bullet" style="background:${bg}">${esc(tri)}</span>`;
 const kst = (iso) => new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
 
 // ---- 용어 설명
@@ -1198,7 +1313,7 @@ function renderBrief(s) {
   let inj = "";
   for (const t of teams) {
     const rows = (b.injuries || {})[t] || [];
-    inj += `<div class="b-team">${sw(t)} ${esc(t)}</div>`;
+    inj += `<div class="b-team">${bul(t)}</div>`;
     inj += rows.length ? rows.map((i) => `<div class="inj"><span class="st ${stClass(i.status)}">${esc(i.status)}</span><b class="inj-n">${esc(i.short || i.name)}</b><span class="inj-p">· ${esc(i.part)}</span>
       <span class="inj-meta">${i.return_date ? `복귀 예상 ${esc(i.return_date.slice(5).replace("-", "/"))} · ` : ""}${ext(i.link, "ESPN")}</span></div>`).join("")
       : `<div class="b-note">발표된 부상자 없음 <span class="src">${ext(`https://www.espn.com/nba/injuries`, "ESPN")}</span></div>`;
@@ -1520,7 +1635,7 @@ function renderBox(s) {
   const tabs = $("box-tabs");
   if (tabs.dataset.teams !== teams.join(",")) {
     tabs.dataset.teams = teams.join(",");
-    tabs.innerHTML = teams.map((t) => `<button role="tab" data-team="${esc(t)}">${sw(t)}${esc(t)}</button>`).join("");
+    tabs.innerHTML = teams.map((t) => `<button role="tab" data-team="${esc(t)}">${bul(t)}</button>`).join("");
   }
   for (const b of tabs.children) b.setAttribute("aria-selected", String(b.dataset.team === boxTeam));
   $("box-toggle").textContent = boxFull ? "간단히 보기 ▴" : "전체 기록 보기 ▾";
@@ -1566,8 +1681,8 @@ $("box-toggle").addEventListener("click", () => {
 });
 
 function renderTeams(s) {
-  $("th-away").innerHTML = `${sw(s.away)} ${esc(s.away)}`;
-  $("th-home").innerHTML = `${sw(s.home)} ${esc(s.home)}`;
+  $("th-away").innerHTML = `${bul(s.away)}`;
+  $("th-home").innerHTML = `${bul(s.home)}`;
   const fmt = {
     pts: (t) => t.pts, reb: (t) => t.reb, ast: (t) => t.ast,
     fg: (t) => `${pct(t.fg_pct)} <span class="muted detail">(${t.fgm}/${t.fga})</span>`,
@@ -1606,7 +1721,7 @@ function renderRotation(s) {
   const tabs = $("rot-tabs");
   if (tabs.dataset.teams !== teams.join(",")) {
     tabs.dataset.teams = teams.join(",");
-    tabs.innerHTML = teams.map((t) => `<button role="tab" data-team="${esc(t)}">${sw(t)}${esc(t)}</button>`).join("");
+    tabs.innerHTML = teams.map((t) => `<button role="tab" data-team="${esc(t)}">${bul(t)}</button>`).join("");
     tabs.onclick = (e) => { const b = e.target.closest("[data-team]"); if (b) { rotTeam = b.dataset.team; rotSel = null; rotKey = ""; renderRotation(data.state); renderOnOff(data.state); } };
   }
   for (const b of tabs.children) b.setAttribute("aria-selected", String(b.dataset.team === rotTeam));
@@ -1817,7 +1932,7 @@ function fatigueHTML(F, title) {
   const md = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
   const col = (t) => {
     const x = F.teams[t], p = x.prev;
-    return `<div class="ft-col"><h4>${sw(t)} ${esc(t)} <span class="b-note">${x.home ? "홈" : "원정"} · ${md(x.date_et)}</span></h4>
+    return `<div class="ft-col"><h4>${bul(t)} <span class="b-note">${x.home ? "홈" : "원정"} · ${md(x.date_et)}</span></h4>
       ${ftRow("직전 경기", p ? `${md(p.date_et)} ${p.home ? "홈 vs" : "원정 @"} ${esc(p.opp)}${p.type !== "정규시즌" ? ` <span class="b-note">${esc(p.type)}</span>` : ""}` : "시즌 첫 경기")}
       ${ftRow("휴식", x.rest_days == null ? "—" : x.b2b ? `<b class="flag-warn">백투백 (0일)</b>` : `${x.rest_days}일`)}
       ${ftRow("빡빡한 일정", x.dense.length ? `<span class="flag-warn">${esc(x.dense.join(" · "))}</span>` : "아님")}
@@ -1892,7 +2007,7 @@ function postHTML(P, g) {
     : `<div class="pg-run"><div class="b-note">${label}</div><p class="empty">${P.runs.min}점 이상 앞선 런 없음</p></div>`;
   const C = P.clutch;
   const mmss = (s) => `${Math.floor(s / 60)}분 ${s % 60}초`;
-  const ct = (t) => { const x = C.teams[t]; return `<tr><td>${sw(t)} ${esc(t)}</td><td>${x.pts}</td><td>${x.fgm}/${x.fga}</td><td>${x.fg3m}/${x.fg3a}</td><td>${x.ftm}/${x.fta}</td><td>${x.tov}</td></tr>`; };
+  const ct = (t) => { const x = C.teams[t]; return `<tr><td>${bul(t)}</td><td>${x.pts}</td><td>${x.fgm}/${x.fga}</td><td>${x.fg3m}/${x.fg3a}</td><td>${x.ftm}/${x.fta}</td><td>${x.tov}</td></tr>`; };
   const clutch = !C.had ? `<p class="empty">클러치 상황 없음 <span class="b-note">(${esc(C.rule)})</span></p>`
     : `<div class="b-note">클러치 구간 ${esc(C.from)} ~ ${esc(C.to)} · 약 ${mmss(C.seconds)} · ${esc(C.rule)}</div>
       <div class="table-wrap"><table class="pg-tbl"><thead><tr><th>팀</th><th>득점</th><th>야투</th><th>3점</th><th>자유투</th><th>턴오버</th></tr></thead><tbody>${[me, op].map(ct).join("")}</tbody></table></div>
@@ -1961,11 +2076,25 @@ function tovTimeline(V, me, op) {
       <span><svg width="18" height="8"><path d="M1 7V2H17V7" style="stroke:var(--ink-2);stroke-width:2;stroke-dasharray:4 3;fill:none"/></svg>최장 무실책</span><span>가운데 막대 = 결정적 런</span></div>
     <div class="tv-tl"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="실책 타임라인: 위 ${esc(me)}, 아래 ${esc(op)}">${g}</svg></div>`;
 }
+// 실책 기반 득점 양 팀 비교 막대: 같은 눈금, 꽉 찬 부분 = 라이브볼 실책 뒤, 빗금 부분 = 데드볼 실책 뒤
+function potBars(T, me, op) {
+  const max = Math.max(T[me].pot, T[op].pot, 1);
+  const bar = (t) => { const x = T[t], w = (v) => (v / max * 100).toFixed(1);
+    return `<span class="lab">${bul(t)}</span>
+      <div class="track" role="img" aria-label="${esc(t)} 실책 기반 ${x.pot}점: 라이브볼 뒤 ${x.pot_live}점, 데드볼 뒤 ${x.pot_dead}점">
+        <div style="width:${w(x.pot_live)}%;background:${color(t)}" title="라이브볼 실책 뒤 ${x.pot_live}점"></div>
+        <div style="width:${w(x.pot_dead)}%;background:repeating-linear-gradient(135deg, ${color(t)} 0 3px, transparent 3px 6px)" title="데드볼 실책 뒤 ${x.pot_dead}점"></div></div>
+      <span class="v">${x.pot}</span>`; };
+  const d = T[me].pot - T[op].pot;
+  const diff = d ? `${esc(d > 0 ? me : op)} +${Math.abs(d)}점` : "같음";
+  return `<div class="pot-cmp">${bar(me)}${bar(op)}</div>
+    <div class="b-note">실책 기반 득점 차이: ${diff} · 꽉 찬 부분 = 라이브볼(스틸) 실책 뒤 · 빗금 = 데드볼 실책 뒤</div>`;
+}
 function tovHTML(V, me, op) {
   if (!V) return "";
   const B = V.baseline, T = V.teams;
   const sg = (v) => `${v > 0 ? "+" : v < 0 ? "−" : "±"}${Math.abs(v)}`;
-  const row = (t) => { const x = T[t], b = B?.teams[t]; return `<tr><td>${sw(t)} ${esc(t)}</td><td>${x.tov} <span class="b-note">(${x.live}·${x.dead})</span></td>
+  const row = (t) => { const x = T[t], b = B?.teams[t]; return `<tr><td>${bul(t)}</td><td>${x.tov} <span class="b-note">(${x.live}·${x.dead})</span></td>
     <td><b>${x.pot}</b></td><td>${x.pot_live}</td><td>${x.pot_dead}</td><td>${x.fb_live}</td><td>${b?.pts_per_opp_tov ?? "—"}</td>
     <td>${b ? `${sg(b.tov_vs)} / ${sg(b.pot_vs)}` : "—"}</td></tr>`; };
   const baseRow = B ? `<tr class="b-note"><td>기준 (경기당)</td><td>${B.per_game.tov}</td><td>${B.per_game.pot}</td><td>—</td><td>—</td><td>—</td><td>${B.pts_per_tov}</td><td></td></tr>` : "";
@@ -1974,14 +2103,14 @@ function tovHTML(V, me, op) {
   const check = off[me] == null ? "" : same ? `NBA 공식 박스스코어 실책 기반 득점과 같음 (${esc(me)} ${off[me]} · ${esc(op)} ${off[op]})`
     : `NBA 공식 박스스코어 값은 ${esc(me)} ${off[me]} · ${esc(op)} ${off[op]} (판정 차이)`;
   const five = (l) => l.length ? l.map(esc).join(" · ") : "—";
-  const bursts = V.clusters.map((c) => `<div class="tv-card burst-c"><div class="ttl">${sw(c.team)} ${esc(c.team)} 실책 몰림 · ${c.n}개</div>
+  const bursts = V.clusters.map((c) => `<div class="tv-card burst-c"><div class="ttl">${bul(c.team)} 실책 몰림 · ${c.n}개</div>
       <div>${esc(c.from)} ~ ${esc(c.to)} <span class="b-note">(${Math.floor(c.span_sec / 60)}분 ${c.span_sec % 60}초)</span></div>
       <div class="b-note">${esc(c.score_from)} → ${esc(c.score_to)} · 그동안 ${esc(c.team)} ${c.pts}점, 상대 ${c.allowed}점 (실책 기반 ${c.opp_pts}점)</div>
       <div class="b-note">실책: ${c.players.map(esc).join(", ")}</div>
       <div class="five">코트 위 5명${c.lineup_same ? "" : ` (실책 ${c.n}개 중 ${c.lineup_n}개 때)`}: ${five(c.lineup)}</div></div>`).join("")
     || `<div class="tv-card"><div class="ttl">실책 몰림</div><p class="empty">${esc(V.burst_rule)} 구간 없음</p></div>`;
   const clean = [me, op].map((t) => { const c = V.clean[t]; if (!c) return ""; const m = Math.floor(c.sec / 60);
-    return `<div class="tv-card"><div class="ttl">${sw(t)} ${esc(t)} 최장 무실책 · ${m}분 ${c.sec % 60}초</div>
+    return `<div class="tv-card"><div class="ttl">${bul(t)} 최장 무실책 · ${m}분 ${c.sec % 60}초</div>
       <div>${esc(c.from)} ~ ${esc(c.to)}</div>
       <div class="b-note">${esc(c.score_from)} → ${esc(c.score_to)} · 그동안 ${esc(t)} ${c.pts}점, 상대 ${c.allowed}점 (${sg(c.pts - c.allowed)})</div>
       <div class="five">가장 오래 뛴 5명 (${Math.floor(c.lineup_sec / 60)}분 ${c.lineup_sec % 60}초, 라인업 ${c.lineups_used}개 중): ${five(c.lineup)}</div></div>`; }).join("");
@@ -1992,6 +2121,7 @@ function tovHTML(V, me, op) {
   const st = (t) => { const vic = t, by = t === me ? op : me, L = V.stealers[t];
     return `<div class="b-note">${esc(vic)} 실책을 가장 많이 빼앗은 ${esc(by)} 선수: ${L.length ? L.map((x) => `${esc(x.name)} ${x.steals}`).join(" · ") : "스틸 없음"}</div>`; };
   return `<div class="pg-sec"><h3>실책 <span class="b-note">'실책 직후 공격권' 판정<button class="info" data-term="pot">ⓘ</button>${B ? ` · 기준: ${esc(B.why)}` : ""}</span></h3>
+      ${potBars(T, me, op)}
       <div class="table-wrap"><table class="pg-tbl"><thead><tr><th>팀</th><th>실책 (라이브·데드)</th><th>실책 기반 득점</th><th>라이브볼 뒤</th><th>데드볼 뒤</th><th>라이브볼 뒤 속공</th><th>상대 실책당 득점</th><th>기준 대비 실책 / 득점</th></tr></thead>
       <tbody>${row(me)}${row(op)}${baseRow}</tbody></table></div>
       <div class="b-note">실책 기반 득점 = 상대 실책 뒤 공격권에서 낸 점수 · 기준은 리그 경기당 한 팀 평균 (라이브·데드볼 구분과 속공 기준값은 공식 통계에 없어 비워 둠) · ${check}</div>
@@ -2014,7 +2144,7 @@ function renderReady() {
   let brief = `<p class="empty">경기 브리핑을 불러오는 중입니다…</p>`;
   if (pb) {
     const teams = [away, home];
-    const col = (t, list, fmt) => `<div><div class="b-team">${sw(t)} ${esc(t)}</div>${list.length ? `<ul>${list.map(fmt).join("")}</ul>` : `<div class="b-note">없음</div>`}</div>`;
+    const col = (t, list, fmt) => `<div><div class="b-team">${bul(t)}</div>${list.length ? `<ul>${list.map(fmt).join("")}</ul>` : `<div class="b-note">없음</div>`}</div>`;
     const tm = (t) => (pb.teams || {})[t] || { starters: [], dnp: [] };
     const h = pb.h2h || {};
     const h2h = (h.games || []).length
@@ -2098,7 +2228,7 @@ function renderHeat(s) {
   const tabs = $("heat-tabs");
   if (tabs.dataset.teams !== teams.join(",")) {
     tabs.dataset.teams = teams.join(",");
-    tabs.innerHTML = teams.map((t) => `<button role="tab" data-team="${esc(t)}">${sw(t)}${esc(t)}</button>`).join("");
+    tabs.innerHTML = teams.map((t) => `<button role="tab" data-team="${esc(t)}">${bul(t)}</button>`).join("");
     tabs.onclick = (e) => { const b = e.target.closest("[data-team]"); if (b) { heatTeam = b.dataset.team; heatPlayer = ""; heatReset(); renderHeat(data.state); } };
     $("heat-player").onchange = (e) => { heatPlayer = e.target.value; heatReset(); renderHeat(data.state); };
   }
@@ -2401,7 +2531,7 @@ function renderWinProb(s) {
   const y = (p) => pad.t + (1 - p) * (H - pad.t - pad.b);
   const home = s.home, hc = color(home);
   $("wp-title").firstChild.textContent = `승리 확률 · 홈팀 ${home} `;
-  $("wp-now").innerHTML = `${sw(home)} ${esc(home)} ${(wp.current * 100).toFixed(0)}%`;
+  $("wp-now").innerHTML = `${bul(home)} ${(wp.current * 100).toFixed(0)}%`;
 
   let out = "";
   for (const p of [0, 0.25, 0.5, 0.75, 1]) {
@@ -2428,7 +2558,7 @@ function renderWinProb(s) {
       <circle cx="${x(a.t)}" cy="${y(d.p)}" r="5" fill="${fill}" stroke="var(--surface)" stroke-width="2"/></g>`;
   });
   svg.innerHTML = out;
-  $("wp-legend").innerHTML = `<span>${sw(home)}${esc(home)}(홈) 승리 확률 · 50% 선 위면 ${esc(home)} 우세</span><span><span class="swatch" style="background:var(--ink-2);border-radius:50%"></span>이슈 ${issues.length}건 (점에 마우스·탭)</span>`;
+  $("wp-legend").innerHTML = `<span>${bul(home)}(홈) 승리 확률 · 50% 선 위면 ${esc(home)} 우세</span><span><span class="swatch" style="background:var(--ink-2);border-radius:50%"></span>이슈 ${issues.length}건 (점에 마우스·탭)</span>`;
 
   const tip = $("wp-tip"), cross = $("wp-cross"), dot = $("wp-dot"), box = () => svg.getBoundingClientRect();
   const place = (cx, cy) => {
@@ -2532,7 +2662,7 @@ function renderChart(s) {
     <circle id="dot" r="4" fill="var(--surface)" stroke="var(--ink)" stroke-width="2" visibility="hidden"/>
     <rect id="hit" x="${pad.l}" y="0" width="${W - pad.l - pad.r}" height="${H}" fill="transparent"/>`;
   svg.innerHTML = out;
-  $("legend").innerHTML = `<span>${sw(s.focus)}${esc(s.focus)} 리드 (위)</span><span>${sw(s.opponent)}${esc(s.opponent)} 리드 (아래)</span>`;
+  $("legend").innerHTML = `<span>${bul(s.focus)} 리드 (위)</span><span>${bul(s.opponent)} 리드 (아래)</span>`;
   drawReactions(svg, s, x, y, now, H);
 
   const hit = $("hit"), tip = $("tip"), dot = $("dot");
@@ -2982,7 +3112,7 @@ function renderStandings(st) {
   if (!st || st.error) { $("st").innerHTML = `<p class="empty">${esc(st?.error || "순위를 받는 중입니다…")}</p>`; return; }
   $("st-sub").innerHTML = `${esc(st.label)} · ${ext(st.source.url, st.source.name)}`;
   const tbl = (conf, ko) => `<div><div class="b-team">${ko}</div><div class="table-wrap"><table class="st-tbl"><thead><tr><th>#</th><th>팀</th><th>승</th><th>패</th><th>승률</th><th>차</th><th>연속</th></tr></thead><tbody>${
-    st[conf].map((r) => `<tr class="${r.team === "NYK" ? "nyk" : ""} ${r.rank === 6 || r.rank === 10 ? "cut" : ""}"><td>${r.rank}</td><td><span class="swatch" style="background:${teamHex(r.team)}"></span>${esc(r.team)}</td><td>${r.w}</td><td>${r.l}</td><td>${r.pct.toFixed(3).replace(/^0/, "")}</td><td>${r.gb === 0 || r.gb === "0" ? "—" : esc(r.gb)}</td><td>${esc((r.streak || "").replace("W ", "승").replace("L ", "패"))}</td></tr>`).join("")}</tbody></table></div></div>`;
+    st[conf].map((r) => `<tr class="${r.team === "NYK" ? "nyk" : ""} ${r.rank === 6 || r.rank === 10 ? "cut" : ""}"><td>${r.rank}</td><td>${bul(r.team, teamHex(r.team))}</td><td>${r.w}</td><td>${r.l}</td><td>${r.pct.toFixed(3).replace(/^0/, "")}</td><td>${r.gb === 0 || r.gb === "0" ? "—" : esc(r.gb)}</td><td>${esc((r.streak || "").replace("W ", "승").replace("L ", "패"))}</td></tr>`).join("")}</tbody></table></div></div>`;
   $("st").innerHTML = tbl("East", "동부") + tbl("West", "서부") + `<div class="b-note" style="grid-column:1/-1">점선 아래: 6위까지 플레이오프 직행, 7~10위 플레이인${staleNote(["standings"])}</div>`;
 }
 // ---- 리그 데스크 2: 어젯밤 추천 · 오늘 볼 경기 · 레이더 · 라이벌 · 전체 순위 · 파워랭킹 · 기록 임박
