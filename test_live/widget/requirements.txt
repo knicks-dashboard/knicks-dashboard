@@ -1,0 +1,2 @@
+# 데스크톱 미니 위젯 (macOS 전용) — 서버 배포에는 필요 없음
+pyobjc-framework-Cocoa>=12

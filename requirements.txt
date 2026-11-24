@@ -1,0 +1,4 @@
+# 대시보드 서버 (test_live/app.py) 실행에 필요한 패키지
+# 설치: pip install -r requirements.txt
+nba_api>=1.10
+requests>=2.31
